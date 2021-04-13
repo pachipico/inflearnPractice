@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
 
 const { User } = require("./models/User");
 const config = require("./config/key");
@@ -8,6 +9,7 @@ const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(cookieParser());
 
 const port = 3000;
 
@@ -23,6 +25,33 @@ mongoose
 
 app.get("/", (req, res) => {
   res.send("Hello World");
+});
+
+app.post("/login", (req, res) => {
+  User.findOne({ email: req.body.email }, (err, user) => {
+    if (!user) {
+      return res.json({
+        loginSuccess: false,
+        message: "no email found.",
+      });
+    } else if (user) {
+      user.comparePassword(req.body.password, (err, isMatch) => {
+        if (!isMatch) {
+          return res.json({ loginSuccess: false, message: "wrong password" });
+        } else if (isMatch) {
+          user.generateToken((err, user) => {
+            if (err) return res.status(400).send(err);
+
+            // save token cookie or local storage
+            res
+              .cookie("x_auth", user.token)
+              .status(200)
+              .json({ loginSuccess: true, userId: user._id });
+          });
+        }
+      });
+    }
+  });
 });
 
 app.post("/register", (req, res) => {
