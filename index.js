@@ -1,14 +1,18 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const User = require("./models/User");
+const bodyParser = require("body-parser");
 
+const { User } = require("./models/User");
+const config = require("./config/key");
 const app = express();
 
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
 const port = 3000;
-const url =
-  "mongodb+srv://jimmy:test1234@cluster0.gy7x9.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+
 mongoose
-  .connect(url, {
+  .connect(config.mongoURI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useFindAndModify: false,
@@ -19,6 +23,15 @@ mongoose
 
 app.get("/", (req, res) => {
   res.send("Hello World");
+});
+
+app.post("/register", (req, res) => {
+  const user = new User(req.body);
+
+  user.save((err, userInfo) => {
+    if (err) return res.json({ success: false, err });
+    return res.status(200).json({ success: true });
+  });
 });
 
 app.listen(port, () => {
