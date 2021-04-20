@@ -12,7 +12,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-const port = 3000;
+const port = 5000;
 
 mongoose
   .connect(config.mongoURI, {
@@ -37,7 +37,7 @@ app.post("/api/users/register", (req, res) => {
   });
 });
 
-app.post("/login", (req, res) => {
+app.post("/api/users/login", (req, res) => {
   //find requested email in our database
   User.findOne({ email: req.body.email }, (err, user) => {
     if (!user) {
@@ -75,8 +75,24 @@ app.get('/api/users/auth', auth, (req, res) => {
   })
 })
 
+app.get('/api/users/logout', auth, (req, res) => {
+  User.findOneAndUpdate({ _id: req.user._id },
+    { token: "" },
+    (err, user) => {
+      if (err) return res.json({ success: false, err });
+      console.log(req.user._id);
 
+      return res.status(200).send({
+        success: true
+      })
+    }
+  )
+})
+
+app.get('/api/hello', (req, res) => {
+  res.send("hello")
+})
 
 app.listen(port, () => {
-  console.log("Server started on port 3000.");
+  console.log("Server started on port 5000.");
 });
